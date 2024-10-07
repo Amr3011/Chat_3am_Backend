@@ -25,6 +25,9 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // Routes
+app.get("/", (req, res) => {
+  res.send("Hello Friends");
+});
 
 // Handle errors
 app.all("*", (req, res, next) => {
