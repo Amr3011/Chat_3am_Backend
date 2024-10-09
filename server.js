@@ -5,9 +5,11 @@ const globalError = require("./src/middlewares/errorMiddleware.js");
 const morgan = require("morgan");
 const ApiError = require("./src/utils/apiError.js");
 const cors = require("cors");
+dotenv.config();
+const userRoutes = require("./src/routes/userRoutes");
+// const chatRoutes = require("./src/routes/chatRoutes");
 
 // Load env vars
-dotenv.config();
 
 // Connect to database
 connectDB();
@@ -25,9 +27,8 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // Routes
-app.get("/", (req, res) => {
-  res.send("Hello Friends");
-});
+app.use("/api/user", userRoutes);
+// app.use("/api/chat", chatRoutes);
 
 // Handle errors
 app.all("*", (req, res, next) => {
