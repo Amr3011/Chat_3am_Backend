@@ -1,8 +1,8 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer"); // لإرسال البريد الإلكتروني
-const crypto = require("crypto"); // لإنشاء رمز التحقق العشوائي
+const nodemailer = require("nodemailer"); 
+const crypto = require("crypto"); 
 
 
 // Register a new user
@@ -29,13 +29,12 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       phone,
-      verificationCode,  // تخزين رمز التحقق
-      isVerified: false   // حالة التحقق
+      verificationCode,     
+      isVerified: false   
     });
 
     await newUser.save();
 
-    // إرسال البريد الإلكتروني برمز التحقق
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -108,7 +107,7 @@ exports.verifyEmail = async (req, res) => {
     }
 
     user.isVerified = true;
-    user.verificationCode = null;  // إزالة رمز التحقق بعد نجاح التحقق
+    user.verificationCode = null;   
     await user.save();
 
     res.json({ message: "Email verified successfully" });
