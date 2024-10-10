@@ -26,6 +26,12 @@ const userSchema = new mongoose.Schema(
       required: [true, "Please provide a phone number"],
       type: String,
       default: ""
+    },
+    verificationCode: {
+       type: String 
+      },
+    isVerified: { 
+      type: Boolean, default: false 
     }
   },
   { timestamps: true }
