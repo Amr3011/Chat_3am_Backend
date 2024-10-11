@@ -18,13 +18,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 } else {
   app.use(morgan("combined"));
 }
 
-// Routes
+// User routes
+const userRoutes = require('./src/routes/userRoutes');
+app.use('/api/users', userRoutes);
 
 // Handle errors
 app.all("*", (req, res, next) => {
