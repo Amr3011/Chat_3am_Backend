@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+      required: [true, "Please provide a name"],
+      trim: true
+    },
     username: {
       type: String,
       required: [true, "Please provide a username"],
@@ -25,11 +30,18 @@ const userSchema = new mongoose.Schema(
     phone: {
       required: [true, "Please provide a phone number"],
       type: String,
-      default: ""
+      default: "",
+      unique: true
     }
   },
   { timestamps: true }
 );
+
+userSchema.index({
+  username: "text",
+  phone: "text",
+  email: "text"
+});
 
 const User = mongoose.model("User", userSchema);
 
