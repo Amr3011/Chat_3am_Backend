@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const expressAsyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto"); 
+const crypto = require("crypto");
 const { sendMail } = require("../utils/Mailer");
 
 //api/user/?search=keyword
@@ -50,7 +50,10 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Generate verification code
-    const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase(); // 6-character verification code
+    const verificationCode = crypto
+      .randomBytes(3)
+      .toString("hex")
+      .toUpperCase(); // 6-character verification code
 
     // Create new user
     const newUser = new User({
@@ -59,23 +62,25 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       phone,
-      verificationCode,     
-      isVerified: false   
+      verificationCode,
+      isVerified: false
     });
 
     await newUser.save();
 
-    
     const subject = "Verify your Email";
     const message = `Your verification code is: ${verificationCode}`;
 
-    
-    await sendMail(user.email, subject, message);
+    await sendMail(email, subject, message);
 
     const { password: _, ...others } = newUser._doc;
-    res.status(201).json({ message: "User registered successfully, check your email for verification code", user: others });
-
-
+    res
+      .status(201)
+      .json({
+        message:
+          "User registered successfully, check your email for verification code",
+        user: others
+      });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -132,13 +137,13 @@ exports.verifyEmail = async (req, res) => {
       return res.status(400).json({ message: "User already verified" });
     }
 
-    console.log(typeof(user.verificationCode))
+    console.log(typeof user.verificationCode);
     if (user.verificationCode !== verificationCode) {
       return res.status(400).json({ message: "Invalid verification code" });
     }
 
     user.isVerified = true;
-    user.verificationCode = null;   
+    user.verificationCode = null;
     await user.save();
 
     res.json({ message: "Email verified successfully" });
