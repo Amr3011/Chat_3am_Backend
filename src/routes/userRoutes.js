@@ -3,13 +3,18 @@ const {
   register,
   login,
   allUsers,
-  deleteUser
+  deleteUser,
+  forgotPassword,
+  resetPassword
 } = require("../controllers/userController");
 const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:resetToken", resetPassword);
+
 router
   .route("/")
   .delete(authMiddleware, deleteUser)
