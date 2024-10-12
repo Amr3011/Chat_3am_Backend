@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const expressAsyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
 
-//api/user/serach=
+//api/user/?search=keyword
 exports.allUsers = expressAsyncHandler(async (req, res) => {
   //req.query.search this like useParams
 
@@ -15,15 +15,14 @@ exports.allUsers = expressAsyncHandler(async (req, res) => {
         //option "i" to make it case insensitive
         { username: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
-      ],
+        { phone: { $regex: search, $options: "i" } }
+      ]
     };
   }
 
   const users = await User.find(filter);
   res.json(users);
 });
-
 
 // Register a new user
 exports.register = async (req, res) => {
