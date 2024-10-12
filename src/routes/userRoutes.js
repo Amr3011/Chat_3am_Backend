@@ -5,7 +5,8 @@ const {
   allUsers,
   deleteUser,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  verifyEmail
 } = require("../controllers/userController");
 const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -13,6 +14,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 router.post("/register", register);
 router.post("/login", login);
 router.post("/forgot-password", forgotPassword);
+router.post('/verify', verifyEmail);
 router.post("/reset-password/:resetToken", resetPassword);
 
 router

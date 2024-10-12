@@ -2,6 +2,7 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const expressAsyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto"); 
 const { sendMail } = require("../utils/Mailer");
 
 //api/user/?search=keyword
@@ -48,22 +49,33 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(parseInt(process.env.SALT));
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Generate verification code
+    const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase(); // 6-character verification code
+
     // Create new user
     const newUser = new User({
       name,
       username,
       email,
       password: hashedPassword,
-      phone
+      phone,
+      verificationCode,     
+      isVerified: false   
     });
 
     await newUser.save();
 
-    const { password: _, ...others } = newUser._doc;
+    
+    const subject = "Verify your Email";
+    const message = `Your verification code is: ${verificationCode}`;
 
-    res
-      .status(201)
-      .json({ message: "User registered successfully", user: others });
+    
+    await sendMail(user.email, subject, message);
+
+    const { password: _, ...others } = newUser._doc;
+    res.status(201).json({ message: "User registered successfully, check your email for verification code", user: others });
+
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -77,6 +89,10 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ $text: { $search: email } });
     if (!user) {
       return res.status(400).json({ message: "User not found" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(400).json({ message: "Verify your email" });
     }
 
     // Compare password
@@ -102,6 +118,34 @@ exports.login = async (req, res) => {
   }
 };
 
+// Verify email
+exports.verifyEmail = async (req, res) => {
+  const { email, verificationCode } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+    console.log(user);
+    if (user.isVerified) {
+      return res.status(400).json({ message: "User already verified" });
+    }
+
+    console.log(typeof(user.verificationCode))
+    if (user.verificationCode !== verificationCode) {
+      return res.status(400).json({ message: "Invalid verification code" });
+    }
+
+    user.isVerified = true;
+    user.verificationCode = null;   
+    await user.save();
+
+    res.json({ message: "Email verified successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 // delete user
 exports.deleteUser = expressAsyncHandler(async (req, res) => {
   const user = await User.findByIdAndDelete(req.user._id);
