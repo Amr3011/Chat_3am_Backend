@@ -3,8 +3,10 @@ const dotenv = require("dotenv");
 const connectDB = require("./src/config/db");
 const globalError = require("./src/middlewares/errorMiddleware.js");
 const morgan = require("morgan");
-const ApiError = require("./src/utils/apiError.js");
+const ApiError = require("./src/utils/ApiError.js");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const userRoutes = require("./src/routes/userRoutes");
 
 // Load env vars
 dotenv.config();
@@ -26,9 +28,7 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("combined"));
 }
 
-// User routes
-const userRoutes = require("./src/routes/userRoutes");
-const cookieParser = require("cookie-parser");
+// mount routes
 app.use("/api/users", userRoutes);
 
 // Handle errors

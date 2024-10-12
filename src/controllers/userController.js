@@ -1,5 +1,6 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
+const expressAsyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
 
 // Register a new user
@@ -78,3 +79,16 @@ exports.login = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// delete user
+exports.deleteUser = expressAsyncHandler(async (req, res) => {
+  const user = await User.findByIdAndDelete(req.user._id);
+  if (user) {
+    res
+      .clearCookie("token")
+      .status(200)
+      .json({ message: "User deleted successfully" });
+  } else {
+    res.status(404).json({ message: "User not found" });
+  }
+});

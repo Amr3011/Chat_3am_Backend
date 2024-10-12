@@ -13,8 +13,11 @@ const userSchema = new mongoose.Schema(
       unique: true
     },
     email: {
-      type: String,
-      match: /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/,
+    type: String,
+      match: [
+        /^[a-zA-Z0-9._%+-]+@(gmail\.com|outlook\.com)$/,
+        "Please provide a valid outlook or gmail mail"
+      ],
       required: [true, "Please provide an email"],
       unique: true
     },
