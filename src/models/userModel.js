@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+      required: [true, "Please provide a name"],
+      trim: true
+    },
     username: {
       type: String,
       required: [true, "Please provide a username"],
@@ -9,7 +14,10 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      match: /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/,
+      match: [
+        /^[a-zA-Z0-9._%+-]+@(gmail\.com|outlook\.com)$/,
+        "Please provide a valid outlook or gmail mail"
+      ],
       required: [true, "Please provide an email"],
       unique: true
     },
@@ -25,6 +33,15 @@ const userSchema = new mongoose.Schema(
     phone: {
       required: [true, "Please provide a phone number"],
       type: String,
+      default: "",
+      unique: true
+    },
+    resetToken: {
+      type: String,
+      default: ""
+    },
+    resetTokenExpire: {
+      type: Date,
       default: ""
     },
     verificationCode: {
@@ -36,6 +53,12 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.index({
+  username: "text",
+  phone: "text",
+  email: "text"
+});
 
 const User = mongoose.model("User", userSchema);
 
