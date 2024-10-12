@@ -1,10 +1,10 @@
-const asynchHandler = require("express-async-handler");
+const expressAsyncHandler = require("express-async-handler");
 
 const Chat = require("../models/chatModel");
 const User = require("../models/userModel");
 
 //creating and fetching one-one chat
-const accessChat = asynchHandler(async (req, res) => {
+const accessChat = expressAsyncHandler(async (req, res) => {
   const { userId } = req.body;
   if (!userId) {
     console.log("userId param not sent with request");
@@ -15,15 +15,15 @@ const accessChat = asynchHandler(async (req, res) => {
     isGroup: false,
     $and: [
       { usersRef: { $elemMatch: { $eq: req.user._id } } },
-      { usersRef: { $elemMatch: { $eq: userId } } },
-    ],
+      { usersRef: { $elemMatch: { $eq: userId } } }
+    ]
   })
     .populate("usersRef", "-password")
     .populate("latestMessage");
 
   isChat = await User.populate(isChat, {
     path: "latestMessage.sender",
-    select: "username avatar email",
+    select: "username avatar email"
   });
 
   if (isChat.length > 0) {
@@ -32,14 +32,14 @@ const accessChat = asynchHandler(async (req, res) => {
     let chatData = {
       chatName: "sender",
       isGroup: false,
-      usersRef: [res.user._id, userId],
+      usersRef: [res.user._id, userId]
     };
 
     try {
       const createdPrivateChat = await Chat.create(chatData);
 
       const FullChat = await Chat.findOne({
-        _id: createdPrivateChat._id,
+        _id: createdPrivateChat._id
       }).populate("usersRef", "-password");
 
       res.status(200).send(FullChat);
@@ -49,7 +49,7 @@ const accessChat = asynchHandler(async (req, res) => {
     }
   }
 });
-const fetchChats = asynchHandler(async (req, res) => {
+const fetchChats = expressAsyncHandler(async (req, res) => {
   try {
     Chat.find({ usersRef: { $elemMatch: { $eq: req.user._id } } })
       .populate("usersRef", "-password")
@@ -59,7 +59,7 @@ const fetchChats = asynchHandler(async (req, res) => {
       .then(async (results) => {
         results = await User.populate(results, {
           path: "latestMessage.sender",
-          select: "username avatar email",
+          select: "username avatar email"
         });
         res.status(200).send(results);
       });
@@ -70,9 +70,9 @@ const fetchChats = asynchHandler(async (req, res) => {
     throw new Error(error.message);
   }
 });
-const createGroupChat = asynchHandler(async (req, res) => {
+const createGroupChat = expressAsyncHandler(async (req, res) => {
   if (!req.body.users || !req.body.name) {
-    return res.status(400).send({ message: "Please Fil all the feilds" });
+    return res.status(400).send({ message: "Please Fil all the felids" });
   }
 
   let users = JSON.parse(req.body.users);
@@ -89,7 +89,7 @@ const createGroupChat = asynchHandler(async (req, res) => {
       chatName: req.body.name,
       usersRef: users,
       isGroup: true,
-      groupAdmin: req.user,
+      groupAdmin: req.user
     });
 
     const createdGroup = await Chat.findOne({ _id: groupChat._id })
@@ -102,15 +102,15 @@ const createGroupChat = asynchHandler(async (req, res) => {
     throw new Error(error.message);
   }
 });
-const renameGroup = asynchHandler(async (req, res) => {
+const renameGroup = expressAsyncHandler(async (req, res) => {
   const { chatId, chatName } = req.body;
   const updatedChat = await Chat.findByIdAndUpdate(
     chatId,
     {
-      chatName,
+      chatName
     },
     {
-      new: true, //to return the new name of the group
+      new: true //to return the new name of the group
     }
   )
     .populate("usersRef", "-password")
@@ -123,7 +123,7 @@ const renameGroup = asynchHandler(async (req, res) => {
     res.json(updatedChat);
   }
 });
-const addToGroup = asynchHandler(async (req, res) => {
+const addToGroup = expressAsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
   const isAdmin = await Chat.findOne({ _id: chatId, groupAdmin: req.user._id });
   if (!isAdmin) {
@@ -145,7 +145,7 @@ const addToGroup = asynchHandler(async (req, res) => {
     res.json(updatedGroupMembers);
   }
 });
-const removeFromGroup = asynchHandler(async (req, res) => {
+const removeFromGroup = expressAsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
 
   const isAdmin = await Chat.findOne({ _id: chatId, groupAdmin: req.user._id });
@@ -175,5 +175,5 @@ module.exports = {
   createGroupChat,
   renameGroup,
   removeFromGroup,
-  addToGroup,
+  addToGroup
 };

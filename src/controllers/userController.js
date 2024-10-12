@@ -1,11 +1,10 @@
-const asynchHandler = require("express-async-handler");
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const expressAsyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
 
 //api/user/serach=
-exports.allUsers = asynchHandler(async (req, res) => {
+exports.allUsers = expressAsyncHandler(async (req, res) => {
   //req.query.search this like useParams
 
   let filter = {};
