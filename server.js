@@ -6,10 +6,14 @@ const morgan = require("morgan");
 const ApiError = require("./src/utils/ApiError.js");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+
+dotenv.config();
+
 const userRoutes = require("./src/routes/userRoutes");
+const chatRoutes = require("./src/routes/chatRoutes.js");
+// const messageRoutes = require("./src/routes/messageRoutes.js");
 
 // Load env vars
-dotenv.config();
 
 // Connect to database
 connectDB();
@@ -28,8 +32,10 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("combined"));
 }
 
-// mount routes
-app.use("/api/users", userRoutes);
+// mount Routes
+app.use("/api/user", userRoutes);
+app.use("/api/chat", chatRoutes);
+// app.use("/api/message", messageRoutes);
 
 // Handle errors
 app.all("*", (req, res, next) => {
