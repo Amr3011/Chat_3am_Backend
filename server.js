@@ -7,7 +7,8 @@ const ApiError = require("./src/utils/apiError.js");
 const cors = require("cors");
 dotenv.config();
 const userRoutes = require("./src/routes/userRoutes");
-// const chatRoutes = require("./src/routes/chatRoutes");
+const chatRoutes = require("./src/routes/chatRoutes.js");
+// const messageRoutes = require("./src/routes/messageRoutes.js");
 
 // Load env vars
 
@@ -28,7 +29,8 @@ if (process.env.NODE_ENV === "development") {
 
 // Routes
 app.use("/api/user", userRoutes);
-// app.use("/api/chat", chatRoutes);
+app.use("/api/chat", chatRoutes);
+// app.use("/api/message", messageRoutes);
 
 // Handle errors
 app.all("*", (req, res, next) => {
