@@ -7,13 +7,12 @@ const ApiError = require("./src/utils/ApiError.js");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
+// Load env vars
 dotenv.config();
 
 const userRoutes = require("./src/routes/userRoutes");
 const chatRoutes = require("./src/routes/chatRoutes.js");
 // const messageRoutes = require("./src/routes/messageRoutes.js");
-
-// Load env vars
 
 // Connect to database
 connectDB();
