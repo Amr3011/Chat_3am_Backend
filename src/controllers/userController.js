@@ -4,6 +4,7 @@ const expressAsyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendMail } = require("../utils/Mailer");
+const ApiError = require("../utils/ApiError");
 
 //api/user/?search=keyword
 exports.allUsers = expressAsyncHandler(async (req, res) => {
@@ -74,13 +75,11 @@ exports.register = async (req, res) => {
     await sendMail(email, subject, message);
 
     const { password: _, ...others } = newUser._doc;
-    res
-      .status(201)
-      .json({
-        message:
-          "User registered successfully, check your email for verification code",
-        user: others
-      });
+    res.status(201).json({
+      message:
+        "User registered successfully, check your email for verification code",
+      user: others
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -91,7 +90,9 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ $text: { $search: email } });
+    const user = await User.findOne({
+      $or: [{ email }, { phone: email }, { phone: email }]
+    });
     if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
@@ -164,9 +165,12 @@ exports.deleteUser = expressAsyncHandler(async (req, res) => {
   }
 });
 
-exports.forgotPassword = expressAsyncHandler(async (req, res) => {
+exports.forgotPassword = expressAsyncHandler(async (req, res, next) => {
   const { username } = req.body;
-  const user = await User.findOne({ $text: { $search: username } });
+
+  const user = await User.findOne({
+    $or: [{ email: username }, { username }, { phone: username }]
+  });
   if (!user) {
     throw new ApiError("User not found", 404);
   }
