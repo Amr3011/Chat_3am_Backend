@@ -167,7 +167,7 @@ exports.forgotPassword = expressAsyncHandler(async (req, res, next) => {
   const { username } = req.body;
 
   const user = await User.findOne({
-    $or: [{ email: username }, { username }, { phone: username }]
+    email: username
   });
   if (!user) {
     throw new ApiError("User not found", 404);
