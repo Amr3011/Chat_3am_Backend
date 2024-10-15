@@ -6,7 +6,7 @@ const {
   deleteUser,
   forgotPassword,
   resetPassword,
-  verifyEmail
+  verifyEmail,
 } = require("../controllers/userController");
 const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");

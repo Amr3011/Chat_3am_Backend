@@ -6,6 +6,7 @@ const morgan = require("morgan");
 const ApiError = require("./src/utils/ApiError.js");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const { Server } = require("socket.io");
 
 // Load env vars
 dotenv.config();
@@ -57,4 +58,17 @@ process.on("unhandledRejection", (err) => {
     console.error("UNHANDLED REJECTION! Shutting down...");
     process.exit(1);
   });
+});
+
+//Setup Socket.io
+
+const io = new Server(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: "http://localhost:5173/",
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("connected to socket.io");
 });
