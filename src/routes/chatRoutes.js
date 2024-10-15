@@ -1,5 +1,5 @@
 const express = require("express");
-
+const authMiddleware = require("../middlewares/authMiddleware");
 const router = express.Router();
 const {
   accessChat,
@@ -11,11 +11,13 @@ const {
 } = require("../controllers/chatController");
 
 //create Private Chat
-router.route("/").post(accessChat);
-router.route("/").get(fetchChats);
-router.route("/group").post(createGroupChat);
-router.route("/rename").put(renameGroup);
-router.route("/groupremove").put(removeFromGroup);
-router.route("/groupadd").put(addToGroup);
+router
+  .route("/")
+  .post(authMiddleware, accessChat)
+  .get(authMiddleware, fetchChats);
+router.route("/group").post(authMiddleware, createGroupChat);
+router.route("/rename").put(authMiddleware, renameGroup);
+router.route("/groupremove").put(authMiddleware, removeFromGroup);
+router.route("/groupadd").put(authMiddleware, addToGroup);
 
 module.exports = router;
