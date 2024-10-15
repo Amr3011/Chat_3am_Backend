@@ -206,3 +206,22 @@ exports.resetPassword = expressAsyncHandler(async (req, res) => {
   await user.save();
   res.json({ message: "Password reset successful" });
 });
+
+// Get all users
+exports.getAllUsers = expressAsyncHandler(async (req, res) => {
+  try {
+    const users = await User.find();    
+    res.status(200).json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: ' Failed to get users  ',
+      error: error.message
+    });
+  }
+});
+
+
