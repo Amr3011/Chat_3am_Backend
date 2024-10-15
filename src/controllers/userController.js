@@ -91,7 +91,7 @@ exports.login = async (req, res) => {
 
   try {
     const user = await User.findOne({
-      $or: [{ email }, { phone: email }, { phone: email }]
+      $or: [{ email }, { username: email }, { phone: email }]
     });
     if (!user) {
       return res.status(400).json({ message: "User not found" });
@@ -133,12 +133,10 @@ exports.verifyEmail = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
-    console.log(user);
     if (user.isVerified) {
       return res.status(400).json({ message: "User already verified" });
     }
 
-    console.log(typeof user.verificationCode);
     if (user.verificationCode !== verificationCode) {
       return res.status(400).json({ message: "Invalid verification code" });
     }
