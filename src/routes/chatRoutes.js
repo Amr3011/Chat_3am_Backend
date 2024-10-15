@@ -17,7 +17,7 @@ router
   .get(authMiddleware, fetchChats);
 router.route("/group").post(authMiddleware, createGroupChat);
 router.route("/rename").put(authMiddleware, renameGroup);
-router.route("/groupremove").put(authMiddleware, removeFromGroup);
-router.route("/groupadd").put(authMiddleware, addToGroup);
+router.route("/group-remove").put(authMiddleware, removeFromGroup);
+router.route("/group-add").put(authMiddleware, addToGroup);
 
 module.exports = router;
