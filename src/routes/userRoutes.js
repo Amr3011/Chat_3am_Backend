@@ -10,10 +10,14 @@ const {
 } = require("../controllers/userController");
 const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");
+const {
+  forgotPasswordValidator
+} = require("../validators/forgotPasswordValidator");
+const { loginValidator } = require("../validators/loginValidator");
 
 router.post("/register", register);
-router.post("/login", login);
-router.post("/forgot-password", forgotPassword);
+router.post("/login", loginValidator,login);
+router.post("/forgot-password", forgotPasswordValidator, forgotPassword);
 router.post("/verify", verifyEmail);
 router.post("/reset-password/:resetToken", resetPassword);
 
