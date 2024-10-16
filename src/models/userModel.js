@@ -45,20 +45,15 @@ const userSchema = new mongoose.Schema(
       default: ""
     },
     verificationCode: {
-       type: String 
-      },
-    isVerified: { 
-      type: Boolean, default: false 
+      type: String
+    },
+    isVerified: {
+      type: Boolean,
+      default: false
     }
   },
   { timestamps: true }
 );
-
-userSchema.index({
-  username: "text",
-  phone: "text",
-  email: "text"
-});
 
 const User = mongoose.model("User", userSchema);
 
