@@ -28,7 +28,7 @@ io.on("connection", (socket) => {
   socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
 
   socket.on("new message", (newMessageReceived) => {
-    let chat = newMessageReceived.chatsRef[0]; // Change it to object
+    let chat = newMessageReceived.chatRef;
 
     if (!chat.usersRef)
       return process.env.NODE_ENV === "development"
