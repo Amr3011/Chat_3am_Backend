@@ -244,14 +244,18 @@ exports.updateUser = expressAsyncHandler(async (req, res) => {
   }
 
   const { password, ...userInfo } = updatedUser._doc;
+  delete userInfo.verificationCode;
+  delete userInfo.isVerified;
+  delete userInfo.resetToken;
+  delete userInfo.resetTokenExpire;
   res.json({ message: "User info updated successfully", user: userInfo });
 });
 
 // Logout Controller
-exports.logout = (req, res) => {
+exports.logout = expressAsyncHandler((req, res) => {
   res.clearCookie("token"); // Assuming you're storing the JWT in a cookie named 'token'
   res.status(200).json({
     status: "success",
     message: "Logged out successfully"
   });
-};
+});
