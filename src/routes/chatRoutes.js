@@ -12,12 +12,13 @@ const {
 } = require("../controllers/chatController");
 const { createChatValidator } = require("../validators/chatValidator");
 
-//create Private Chat
+//  
 router
   .route("/")
   .post(authMiddleware, accessChat)
   .get(authMiddleware, fetchChats);
 
+// search chat
 router.route("/:chatId").get(authMiddleware, searchChat);
 
 router.route("/group").post(authMiddleware, createChatValidator, createChat);
