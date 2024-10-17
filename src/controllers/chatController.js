@@ -3,9 +3,10 @@ const expressAsyncHandler = require("express-async-handler");
 const Chat = require("../models/chatModel");
 const User = require("../models/userModel");
 const ApiError = require("../utils/ApiError");
+const Message = require("../models/messageModel");
 
 //creating and fetching one-one chat
-const accessChat = expressAsyncHandler(async (req, res) => {
+exports.accessChat = expressAsyncHandler(async (req, res) => {
   const { userId } = req.body;
   if (!userId) {
     return res.status(400).json({ message: "User Id is required" });
@@ -48,7 +49,7 @@ const accessChat = expressAsyncHandler(async (req, res) => {
     }
   }
 });
-const fetchChats = expressAsyncHandler(async (req, res) => {
+exports.fetchChats = expressAsyncHandler(async (req, res) => {
   try {
     Chat.find({ usersRef: { $elemMatch: { $eq: req.user._id } } })
       .populate("usersRef", "-password")
@@ -69,10 +70,10 @@ const fetchChats = expressAsyncHandler(async (req, res) => {
   }
 });
 
-const createChat = expressAsyncHandler(async (req, res) => {
-  let users = new Set([...users, req.user._id]).toArray()
+exports.createChat = expressAsyncHandler(async (req, res) => {
+  let users = new Set([...users, req.user._id]).toArray();
   console.log(users);
-  
+
   const existChat = await Chat.findOne({
     usersRef: users
   });
@@ -116,7 +117,7 @@ const createChat = expressAsyncHandler(async (req, res) => {
     throw new ApiError(error.message, 400);
   }
 });
-const renameGroup = expressAsyncHandler(async (req, res) => {
+exports.renameGroup = expressAsyncHandler(async (req, res) => {
   const { chatId, chatName } = req.body;
   const updatedChat = await Chat.findByIdAndUpdate(
     chatId,
@@ -136,7 +137,7 @@ const renameGroup = expressAsyncHandler(async (req, res) => {
     res.json(updatedChat);
   }
 });
-const addToGroup = expressAsyncHandler(async (req, res) => {
+exports.addToGroup = expressAsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
   const isAdmin = await Chat.findOne({ _id: chatId, groupAdmin: req.user._id });
   if (!isAdmin) {
@@ -156,7 +157,7 @@ const addToGroup = expressAsyncHandler(async (req, res) => {
     res.json(updatedGroupMembers);
   }
 });
-const removeFromGroup = expressAsyncHandler(async (req, res) => {
+exports.removeFromGroup = expressAsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
 
   const isAdmin = await Chat.findOne({ _id: chatId, groupAdmin: req.user._id });
@@ -178,11 +179,21 @@ const removeFromGroup = expressAsyncHandler(async (req, res) => {
   }
 });
 
-module.exports = {
-  accessChat,
-  fetchChats,
-  createChat,
-  renameGroup,
-  removeFromGroup,
-  addToGroup
-};
+exports.searchChat = expressAsyncHandler(async (req, res) => {
+  const { searchTerm } = req.query;
+  const { chatId } = req.params;
+  const messages = await Message.find({
+    chatRef: chatId
+  })
+    .find({ content: { $regex: searchTerm, $options: "i" } })
+    .populate({
+      path: "sender",
+      select: "username avatar",
+      model: "User"
+    })
+    .sort({ createdAt: -1 });
+  if (!messages) {
+    throw new ApiError("No messages found", 404);
+  }
+  res.json(messages);
+});
