@@ -8,5 +8,17 @@ exports.createChatValidator = [
     .isMongoId()
     .withMessage("invalid MongoId"),
   check("name").notEmpty(),
-  validatorMiddleware,
+  validatorMiddleware
+];
+
+exports.searchChatValidator = [
+  check("chatId")
+    .notEmpty()
+    .withMessage("chatId is empty")
+    .isMongoId()
+    .withMessage("invalid MongoId"),
+  ,
+  check("searchTerm").notEmpty().withMessage("searchTerm is empty"),
+  ,
+  validatorMiddleware
 ];

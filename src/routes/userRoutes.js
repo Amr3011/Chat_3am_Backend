@@ -23,8 +23,7 @@ router.post("/login", loginValidator, login);
 router.post("/forgot-password", forgotPasswordValidator, forgotPassword);
 router.post("/verify", verifyEmail);
 router.post("/reset-password/:resetToken", resetPassword);
-router.post("/logout", logout);
-
+router.get("/logout", authMiddleware, logout);
 
 router
   .route("/")

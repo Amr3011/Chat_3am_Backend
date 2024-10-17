@@ -71,13 +71,12 @@ exports.fetchChats = expressAsyncHandler(async (req, res) => {
 });
 
 exports.createChat = expressAsyncHandler(async (req, res) => {
-  let users = new Set([...users, req.user._id]).toArray();
-  console.log(users);
-
+  let users = new Set([...req.body.users, req.user._id.toString()]);
+  users = Array.from(users);
   const existChat = await Chat.findOne({
     usersRef: users
   });
-  console.log(existChat);
+
   if (existChat) {
     throw new ApiError("Chat already exists", 400);
   }
@@ -109,14 +108,23 @@ exports.createChat = expressAsyncHandler(async (req, res) => {
     const groupChat = await Chat.create(chat);
 
     const createdGroup = await Chat.findOne({ _id: groupChat._id })
-      .populate("usersRef", "-password")
-      .populate("groupAdmin", "-password");
+      .populate({
+        path: "usersRef",
+        select: "email username avatar",
+        model: "User"
+      })
+      .populate({
+        path: "groupAdmin",
+        select: "email username avatar",
+        model: "User"
+      });
 
     res.status(200).json(createdGroup);
   } catch (error) {
     throw new ApiError(error.message, 400);
   }
 });
+
 exports.renameGroup = expressAsyncHandler(async (req, res) => {
   const { chatId, chatName } = req.body;
   const updatedChat = await Chat.findByIdAndUpdate(
