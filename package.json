@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start:prod": "node .",
-    "start:dev": "nodemon .",
+    "start": "node .",
+    "dev": "nodemon .",
     "lint": "eslint ."
   },
   "keywords": [],
