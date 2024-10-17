@@ -7,6 +7,9 @@ const {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  logout,
+  updateUser,
+  // getUserById
 } = require("../controllers/userController");
 const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -21,9 +24,13 @@ router.post("/login", loginValidator,login);
 router.post("/forgot-password", forgotPasswordValidator, forgotPassword);
 router.post("/verify", verifyEmail);
 router.post("/reset-password/:resetToken", resetPassword);
+router.post("/logout", logout);
+
+// router.put("/update/:id", authMiddleware, updateUser);
+// router.get("/:id", authMiddleware, getUserById);
 
 router
-  .route("/")
+  .route("/").put(authMiddleware,updateUser)
   .delete(authMiddleware, deleteUser)
   .get(authMiddleware, allUsers);
 
