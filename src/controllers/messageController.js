@@ -30,8 +30,13 @@ exports.sendMessage = async (req, res) => {
       .populate("chatRef")
       .populate({
         path: "chatRef",
-        select: "chatName isGroup",
-        model: "Chat"
+        select: "chatName isGroup usersRef",
+        model: "Chat",
+        populate: {
+          path: "usersRef",
+          select: "username avatar _id",
+          model: "User"
+        }
       });
 
     // Respond with the populated message

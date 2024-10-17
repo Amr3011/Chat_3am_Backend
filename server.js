@@ -5,8 +5,8 @@ const server = require("./app");
 const io = new ioServer(server, {
   pingTimeout: 60000,
   cors: {
-    origin: process.env.CLIENT_URL,
-  },
+    origin: process.env.CLIENT_URL
+  }
 });
 
 io.on("connection", (socket) => {
@@ -32,7 +32,7 @@ io.on("connection", (socket) => {
 
     if (!chat.usersRef)
       return process.env.NODE_ENV === "development"
-        ? console.log("chat.users not defined")
+        ? console.log("chat.usersRef not defined")
         : null;
 
     chat.usersRef.forEach((user) => {
