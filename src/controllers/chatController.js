@@ -3,28 +3,28 @@ const expressAsyncHandler = require("express-async-handler");
 const Chat = require("../models/chatModel");
 const User = require("../models/userModel");
 const ApiError = require("../utils/ApiError");
+const Message = require("../models/messageModel");
 
 //creating and fetching one-one chat
-const accessChat = expressAsyncHandler(async (req, res) => {
+exports.accessChat = expressAsyncHandler(async (req, res) => {
   const { userId } = req.body;
   if (!userId) {
-    console.log("userId not sent with request");
-    return res.sendStatus(400);
+    return res.status(400).json({ message: "User Id is required" });
   }
 
   let isChat = await Chat.find({
     isGroup: false,
     $and: [
       { usersRef: { $elemMatch: { $eq: req.user._id } } },
-      { usersRef: { $elemMatch: { $eq: userId } } },
-    ],
+      { usersRef: { $elemMatch: { $eq: userId } } }
+    ]
   })
     .populate("usersRef", "-password")
     .populate("latestMessage");
 
   isChat = await User.populate(isChat, {
     path: "latestMessage.sender",
-    select: "username avatar email",
+    select: "username avatar email"
   });
 
   if (isChat.length > 0) {
@@ -33,14 +33,14 @@ const accessChat = expressAsyncHandler(async (req, res) => {
     let chatData = {
       chatName: "sender",
       isGroup: false,
-      usersRef: [res.user._id, userId],
+      usersRef: [res.user._id, userId]
     };
 
     try {
       const createdPrivateChat = await Chat.create(chatData);
 
       const FullChat = await Chat.findOne({
-        _id: createdPrivateChat._id,
+        _id: createdPrivateChat._id
       }).populate("usersRef", "-password");
 
       res.status(200).json(FullChat);
@@ -49,7 +49,7 @@ const accessChat = expressAsyncHandler(async (req, res) => {
     }
   }
 });
-const fetchChats = expressAsyncHandler(async (req, res) => {
+exports.fetchChats = expressAsyncHandler(async (req, res) => {
   try {
     Chat.find({ usersRef: { $elemMatch: { $eq: req.user._id } } })
       .populate("usersRef", "-password")
@@ -59,7 +59,7 @@ const fetchChats = expressAsyncHandler(async (req, res) => {
       .then(async (results) => {
         results = await User.populate(results, {
           path: "latestMessage.sender",
-          select: "username avatar email",
+          select: "username avatar email"
         });
         res.status(200).json(results);
       });
@@ -69,9 +69,14 @@ const fetchChats = expressAsyncHandler(async (req, res) => {
     throw new ApiError(error.message, 400);
   }
 });
-const createChat = expressAsyncHandler(async (req, res) => {
-  let users = req.body.users;
-  const existChat = await Chat.findOne({ usersRef: [...users, req.user._id] });
+
+exports.createChat = expressAsyncHandler(async (req, res) => {
+  let users = new Set([...users, req.user._id]).toArray();
+  console.log(users);
+
+  const existChat = await Chat.findOne({
+    usersRef: users
+  });
   console.log(existChat);
   if (existChat) {
     throw new ApiError("Chat already exists", 400);
@@ -79,7 +84,7 @@ const createChat = expressAsyncHandler(async (req, res) => {
 
   if (users.length < 1) {
     return res.status(400).json({
-      message: "More than one user are required to form a group chat",
+      message: "More than one user are required to form a group chat"
     });
   }
   if (!users.includes(req.user._id.toString())) {
@@ -93,12 +98,12 @@ const createChat = expressAsyncHandler(async (req, res) => {
         chatName: req.body.name,
         usersRef: users,
         isGroup: true,
-        groupAdmin: req.user._id,
+        groupAdmin: req.user._id
       };
     } else {
       chat = {
         chatName: req.body.name,
-        usersRef: users,
+        usersRef: users
       };
     }
     const groupChat = await Chat.create(chat);
@@ -112,15 +117,15 @@ const createChat = expressAsyncHandler(async (req, res) => {
     throw new ApiError(error.message, 400);
   }
 });
-const renameGroup = expressAsyncHandler(async (req, res) => {
+exports.renameGroup = expressAsyncHandler(async (req, res) => {
   const { chatId, chatName } = req.body;
   const updatedChat = await Chat.findByIdAndUpdate(
     chatId,
     {
-      chatName,
+      chatName
     },
     {
-      new: true, //to return the new name of the group
+      new: true //to return the new name of the group
     }
   )
     .populate("usersRef", "-password")
@@ -132,7 +137,7 @@ const renameGroup = expressAsyncHandler(async (req, res) => {
     res.json(updatedChat);
   }
 });
-const addToGroup = expressAsyncHandler(async (req, res) => {
+exports.addToGroup = expressAsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
   const isAdmin = await Chat.findOne({ _id: chatId, groupAdmin: req.user._id });
   if (!isAdmin) {
@@ -152,7 +157,7 @@ const addToGroup = expressAsyncHandler(async (req, res) => {
     res.json(updatedGroupMembers);
   }
 });
-const removeFromGroup = expressAsyncHandler(async (req, res) => {
+exports.removeFromGroup = expressAsyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
 
   const isAdmin = await Chat.findOne({ _id: chatId, groupAdmin: req.user._id });
@@ -174,11 +179,21 @@ const removeFromGroup = expressAsyncHandler(async (req, res) => {
   }
 });
 
-module.exports = {
-  accessChat,
-  fetchChats,
-  createChat,
-  renameGroup,
-  removeFromGroup,
-  addToGroup,
-};
+exports.searchChat = expressAsyncHandler(async (req, res) => {
+  const { searchTerm } = req.query;
+  const { chatId } = req.params;
+  const messages = await Message.find({
+    chatRef: chatId
+  })
+    .find({ content: { $regex: searchTerm, $options: "i" } })
+    .populate({
+      path: "sender",
+      select: "username avatar",
+      model: "User"
+    })
+    .sort({ createdAt: -1 });
+  if (!messages) {
+    throw new ApiError("No messages found", 404);
+  }
+  res.json(messages);
+});

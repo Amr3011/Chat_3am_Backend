@@ -23,7 +23,9 @@ exports.allUsers = expressAsyncHandler(async (req, res) => {
     };
   }
 
-  const users = await User.find(filter);
+  const users = await User.find(filter).select(
+    "-password -verificationCode -isVerified -resetToken -resetTokenExpire"
+  );
   res.json(users);
 });
 
@@ -74,11 +76,15 @@ exports.register = async (req, res) => {
 
     await sendMail(email, subject, message);
 
-    const { password: _, ...others } = newUser._doc;
+    delete newUser._doc.password;
+    delete newUser._doc.verificationCode;
+    delete newUser._doc.isVerified;
+    delete newUser._doc.resetToken;
+    delete newUser._doc.resetTokenExpire;
     res.status(201).json({
       message:
         "User registered successfully, check your email for verification code",
-      user: others
+      user: newUser._doc
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -104,7 +110,9 @@ exports.login = async (req, res) => {
     // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "The email or password entered is incorrect." });
+      return res
+        .status(400)
+        .json({ message: "The email or password entered is incorrect." });
     }
 
     // Generate JWT token
@@ -112,6 +120,10 @@ exports.login = async (req, res) => {
       expiresIn: process.env.JWT_EXPIRE
     });
     const { password: _, ...others } = user._doc;
+    delete others.resetToken;
+    delete others.resetTokenExpire;
+    delete others.verificationCode;
+    delete others.isVerified;
     res
       .cookie("token", token, {
         httpOnly: true,
@@ -178,6 +190,7 @@ exports.forgotPassword = expressAsyncHandler(async (req, res, next) => {
   });
   user.resetToken = token;
   user.resetTokenExpire = Date.now() + eval(process.env.RESET_TOKEN_EXPIRE);
+  await user.save();
   const subject = "Password Reset";
   const message = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6;">
@@ -214,49 +227,31 @@ exports.resetPassword = expressAsyncHandler(async (req, res) => {
   res.json({ message: "Password reset successful" });
 });
 
-
 // Update user info
 exports.updateUser = expressAsyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { name, username, email, phone } = req.body;
 
-    // Find the user by ID and update the fields
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { name, username, email, phone },
-      { new: true, runValidators: true }
-    );
+  // Find the user by ID and update the fields
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { name, username, email, phone },
+    { new: true, runValidators: true }
+  );
 
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
+  if (!updatedUser) {
+    return res.status(404).json({ message: "User not found" });
+  }
 
-    const { password, ...userInfo } = updatedUser._doc;
-    res.json({ message: "User info updated successfully", user: userInfo });
-  
+  const { password, ...userInfo } = updatedUser._doc;
+  res.json({ message: "User info updated successfully", user: userInfo });
 });
-
-// // Get user by ID
-// exports.getUserById = expressAsyncHandler(async (req, res) => {
-//   const userId = req.params.id;
-
-//   const user = await User.findById(userId);
-//   if (!user) {
-//     return res.status(404).json({ message: "User not found" });
-//   }
-
-//   // Exclude the password field from the response
-//   const { password, ...userInfo } = user._doc;
-//   res.json(userInfo);
-// });
-
-
 
 // Logout Controller
 exports.logout = (req, res) => {
-  res.clearCookie('token');  // Assuming you're storing the JWT in a cookie named 'token'
+  res.clearCookie("token"); // Assuming you're storing the JWT in a cookie named 'token'
   res.status(200).json({
-    status: 'success',
-    message: 'Logged out successfully',
+    status: "success",
+    message: "Logged out successfully"
   });
 };
