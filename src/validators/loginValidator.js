@@ -18,8 +18,5 @@ exports.loginValidator = [
     // If none of the above conditions are met, throw an error
     throw new Error("Input must be a valid email, username, or phone number");
   }),
-  check("password")
-    .isStrongPassword()
-    .withMessage("Password is not strong enough"),
   validatorMiddleware
 ];

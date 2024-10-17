@@ -14,8 +14,9 @@ const {
   forgotPasswordValidator
 } = require("../validators/forgotPasswordValidator");
 const { loginValidator } = require("../validators/loginValidator");
+const { RegisterValidator } = require("../validators/RegisterValidator");
 
-router.post("/register", register);
+router.post("/register", RegisterValidator,register);
 router.post("/login", loginValidator,login);
 router.post("/forgot-password", forgotPasswordValidator, forgotPassword);
 router.post("/verify", verifyEmail);
