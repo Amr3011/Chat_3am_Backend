@@ -226,3 +226,32 @@ exports.resetPassword = expressAsyncHandler(async (req, res) => {
   await user.save();
   res.json({ message: "Password reset successful" });
 });
+
+// Update user info
+exports.updateUser = expressAsyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const { name, username, email, phone } = req.body;
+
+  // Find the user by ID and update the fields
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { name, username, email, phone },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedUser) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const { password, ...userInfo } = updatedUser._doc;
+  res.json({ message: "User info updated successfully", user: userInfo });
+});
+
+// Logout Controller
+exports.logout = (req, res) => {
+  res.clearCookie("token"); // Assuming you're storing the JWT in a cookie named 'token'
+  res.status(200).json({
+    status: "success",
+    message: "Logged out successfully"
+  });
+};
