@@ -12,7 +12,7 @@ dotenv.config();
 
 const userRoutes = require("./src/routes/userRoutes");
 const chatRoutes = require("./src/routes/chatRoutes.js");
-// const messageRoutes = require("./src/routes/messageRoutes.js");
+const messageRoutes = require("./src/routes/messageRoutes.js");
 
 // Connect to database
 connectDB();
@@ -34,7 +34,7 @@ if (process.env.NODE_ENV === "development") {
 // mount Routes
 app.use("/api/user", userRoutes);
 app.use("/api/chat", chatRoutes);
-// app.use("/api/message", messageRoutes);
+app.use("/api/message", messageRoutes);
 
 // Handle errors
 app.all("*", (req, res, next) => {

@@ -15,12 +15,11 @@ const messageSchema = new mongoose.Schema(
       type: String,
       default: "text",
     },
-    chatsRef: [
+    chatRef: 
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Chat",
       },
-    ],
     isSeen: {
       type: Boolean,
       default: false,
