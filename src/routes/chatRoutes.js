@@ -1,35 +1,31 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
+
 const router = express.Router();
+
 const {
   createPrivateChat,
-  fetchChats,
+  fetchPrivateChats,
   createGroupChat,
   renameGroup,
   removeFromGroup,
   addToGroup,
-  searchChat,
+  fetchGroupChats
 } = require("../controllers/chatController");
-const { createChatValidator } = require("../validators/chatValidator");
-
-// router.route("/search-users").get(authMiddleware, searchUsersForPrivateChat);
+const { createGroupChatValidator } = require("../validators/chatValidator");
 
 router
   .route("/")
   .post(authMiddleware, createPrivateChat)
-  .get(authMiddleware, fetchChats);
-
-router.g;
+  .get(authMiddleware, fetchPrivateChats);
 
 router
   .route("/group")
-  .post(authMiddleware, createChatValidator, createGroupChat)
+  .post(authMiddleware, createGroupChatValidator, createGroupChat)
+  .get(authMiddleware, fetchGroupChats)
   .put(authMiddleware, renameGroup);
 
 router.route("/group-add").put(authMiddleware, addToGroup);
 router.route("/group-remove").put(authMiddleware, removeFromGroup);
-
-// search chat
-router.route("/:chatId").get(authMiddleware, searchChat);
 
 module.exports = router;

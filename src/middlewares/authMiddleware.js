@@ -10,7 +10,10 @@ const authMiddleware = expressAsyncHandler(async (req, res, next) => {
   const { id } = jwt.verify(token, process.env.JWT_SECRET);
   const user = await User.findById(id);
   if (!user) {
-    return res.status(401).json({ message: "User not found" });
+    return res
+      .clearCookie("token")
+      .status(401)
+      .json({ message: "User not found" });
   }
   req.user = user;
   next();

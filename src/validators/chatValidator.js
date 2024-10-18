@@ -1,24 +1,12 @@
 const { check } = require("express-validator");
 const validatorMiddleware = require("../middlewares/validatorMiddleware");
 
-exports.createChatValidator = [
+exports.createGroupChatValidator = [
   check("users.*")
     .notEmpty()
     .withMessage("users is empty")
     .isMongoId()
     .withMessage("invalid MongoId"),
-  check("name").notEmpty(),
-  validatorMiddleware
-];
-
-exports.searchChatValidator = [
-  check("chatId")
-    .notEmpty()
-    .withMessage("chatId is empty")
-    .isMongoId()
-    .withMessage("invalid MongoId"),
-  ,
-  check("searchTerm").notEmpty().withMessage("searchTerm is empty"),
-  ,
+  check("chatName").notEmpty().withMessage("chatName is empty"),
   validatorMiddleware
 ];
