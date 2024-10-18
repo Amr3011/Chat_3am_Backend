@@ -251,6 +251,34 @@ exports.updateUser = expressAsyncHandler(async (req, res) => {
   res.json({ message: "User info updated successfully", user: userInfo });
 });
 
+
+// Update user password
+exports.updatePassword = expressAsyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.user._id;
+
+  // Find the user
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  // Check if the old password is correct
+  const isMatch = await bcrypt.compare(oldPassword, user.password);
+  if (!isMatch) {
+    return res.status(400).json({ message: "Old password is incorrect" });
+  }
+
+  // Hash the new password and update
+  const salt = await bcrypt.genSalt(parseInt(process.env.SALT));
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+  user.password = hashedPassword;
+  await user.save();
+
+  res.json({ message: "Password updated successfully" });
+});
+
+
 // Logout Controller
 exports.logout = expressAsyncHandler((req, res) => {
   res.clearCookie("token"); // Assuming you're storing the JWT in a cookie named 'token'
