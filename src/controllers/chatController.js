@@ -31,80 +31,42 @@ exports.createPrivateChat = expressAsyncHandler(async (req, res) => {
   res.status(200).json(chat);
 });
 
-exports.fetchChats = expressAsyncHandler(async (req, res) => {
-  try {
-    const chats = await Chat.find({
-      usersRef: { $elemMatch: { $eq: req.user._id } }
-    })
-      .populate("usersRef", "name username email phone") // Populate usersRef with required fields
-      .populate("groupAdmin", "-password")
-      .populate("latestMessage")
-      .sort({ updatedAt: -1 });
-
-    // Map through the chats to set the display name dynamically
-    const modifiedChats = chats.map((chat) => {
-      // Find the other user in the usersRef array
-      const otherUser = chat.usersRef.find(
-        (user) => user._id.toString() !== req.user._id.toString()
-      );
-
-      // Return the chat object along with other user details
-      return {
-        ...chat.toObject(), // Convert Mongoose document to plain JavaScript object
-        chatName: otherUser ? otherUser.name : chat.chatName, // Set chatName to the other user's username
-        email: otherUser ? otherUser.email : null, // Include email
-        phone: otherUser ? otherUser.phone : null // Include phone
-      };
-    });
-
-    res.status(200).json(modifiedChats); // Return the modified chats
-  } catch (error) {
-    console.error("Error fetching chats:", error.message); // Log error for debugging
-    res.status(500).json({ message: error.message }); // Respond with an error message
-  }
+exports.fetchPrivateChats = expressAsyncHandler(async (req, res) => {
+  const chats = await Chat.find({
+    isGroup: false,
+    usersRef: { $elemMatch: { $eq: req.user._id } }
+  }).populate("usersRef", "username name avatar _id");
+  res.status(200).json(chats);
 });
 
 exports.createGroupChat = expressAsyncHandler(async (req, res) => {
-  let users = new Set([...req.body.users, req.user._id.toString()]);
+  let users = new Set([...req.body.users, req.user._id]);
   users = Array.from(users);
-  const existChat = await Chat.findOne({
-    usersRef: users
+  const { chatName } = req.body;
+  if (!users || users.length < 2) {
+    return res.status(400).json({ message: "Group members are required" });
+  }
+  chat = new Chat({
+    chatName,
+    isGroup: true,
+    usersRef: users,
+    groupAdmin: req.user._id
   });
+  chat = await chat.save();
+  res.status(200).json(chat);
+});
 
-  if (existChat) {
-    throw new ApiError("Chat already exists", 400);
-  }
-
-  if (!users.includes(req.user._id.toString())) {
-    users.push(req.user); // Add current user along with all the people
-  }
-
-  try {
-    let chat;
-    chat = {
-      chatName: req.body.name,
-      usersRef: users,
-      isGroup: true,
-      groupAdmin: req.user._id
-    };
-    const groupChat = await Chat.create(chat);
-
-    const createdGroup = await Chat.findOne({ _id: groupChat._id })
-      .populate({
-        path: "usersRef",
-        select: "email username avatar",
-        model: "User"
-      })
-      .populate({
-        path: "groupAdmin",
-        select: "email username avatar",
-        model: "User"
-      });
-
-    res.status(200).json(createdGroup);
-  } catch (error) {
-    throw new ApiError(error.message, 400);
-  }
+exports.fetchGroupChats = expressAsyncHandler(async (req, res) => {
+  const chats = await Chat.find({
+    isGroup: true,
+    $or: [
+      { usersRef: { $elemMatch: { $eq: req.user._id } } },
+      { groupAdmin: req.user._id }
+    ]
+  })
+    .populate("usersRef", "username name avatar _id")
+    .populate("groupAdmin", "username name avatar _id");
+  res.status(200).json(chats);
 });
 
 exports.renameGroup = expressAsyncHandler(async (req, res) => {
