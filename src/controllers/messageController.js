@@ -1,5 +1,6 @@
 const Message = require("../models/messageModel");
 const Chat = require("../models/chatModel");
+const expressAsyncHandler = require("express-async-handler");
 
 exports.sendMessage = async (req, res) => {
   try {
@@ -53,3 +54,39 @@ exports.sendMessage = async (req, res) => {
     });
   }
 };
+
+// Fetch messages for a chat or group chat or search messages
+exports.getMessages = expressAsyncHandler(async (req, res) => {
+  const page = parseInt(req?.query?.page) || 1;
+  const limit = parseInt(req?.query?.limit) || 7;
+  const skip = (page - 1) * limit;
+  const { chatId } = req.params;
+  const filterObject = req.query.search
+    ? {
+        chatRef: chatId,
+        $or: [
+          { content: { $regex: req.query.search, $options: "i" } },
+          { contentType: { $regex: req.query.search, $options: "i" } }
+        ]
+      }
+    : { chatRef: chatId };
+  const documents = await Message.countDocuments(filterObject);
+
+  const messages = await Message.find(filterObject)
+    .sort("-createdAt")
+    .skip(skip)
+    .limit(limit)
+    .select("_id sender content contentType isSeen isDelivered updatedAt")
+    .populate({
+      path: "sender",
+      select: "username avatar _id",
+      model: "User"
+    });
+
+  res.status(200).json({
+    data: messages,
+    length: messages.length,
+    documents,
+    totalPages: Math.ceil(documents / limit)
+  });
+});

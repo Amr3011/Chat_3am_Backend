@@ -12,56 +12,29 @@ exports.createPrivateChat = expressAsyncHandler(async (req, res) => {
     return res.status(400).json({ message: "User Id is required" });
   }
 
-  let isChat = await Chat.find({
+  let chat = await Chat.findOne({
     isGroup: false,
     $and: [
       { usersRef: { $elemMatch: { $eq: req.user._id } } },
-      { usersRef: { $elemMatch: { $eq: userId } } },
-    ],
-  })
-    .populate("usersRef", "-password")
-    .populate("latestMessage");
-
-  isChat = await User.populate(isChat, {
-    path: "latestMessage.sender",
-    select: "username avatar email",
+      { usersRef: { $elemMatch: { $eq: userId } } }
+    ]
   });
 
-  if (isChat.length > 0) {
-    res.json(isChat[0]);
-  } else {
-    // Fetch the user details for the other user
-    const otherUser = await User.findById(userId).select("username");
-
-    // Ensure the user exists
-    if (!otherUser) {
-      return res.status(400).json({ message: "User not found" });
-    }
-
-    let chatData = {
-      chatName: otherUser.username, // Set chatName dynamically based on the other user's username
+  if (!chat) {
+    chat = new Chat({
+      chatName: "Private Chat",
       isGroup: false,
-      usersRef: [req.user._id, userId],
-    };
-
-    try {
-      const createdPrivateChat = await Chat.create(chatData);
-
-      const FullChat = await Chat.findOne({
-        _id: createdPrivateChat._id,
-      }).populate("usersRef", "-password");
-
-      res.status(200).json(FullChat);
-    } catch (error) {
-      throw new ApiError(error.message, 400);
-    }
+      usersRef: [req.user._id, userId]
+    });
+    chat = await chat.save();
   }
+  res.status(200).json(chat);
 });
 
 exports.fetchChats = expressAsyncHandler(async (req, res) => {
   try {
     const chats = await Chat.find({
-      usersRef: { $elemMatch: { $eq: req.user._id } },
+      usersRef: { $elemMatch: { $eq: req.user._id } }
     })
       .populate("usersRef", "name username email phone") // Populate usersRef with required fields
       .populate("groupAdmin", "-password")
@@ -80,7 +53,7 @@ exports.fetchChats = expressAsyncHandler(async (req, res) => {
         ...chat.toObject(), // Convert Mongoose document to plain JavaScript object
         chatName: otherUser ? otherUser.name : chat.chatName, // Set chatName to the other user's username
         email: otherUser ? otherUser.email : null, // Include email
-        phone: otherUser ? otherUser.phone : null, // Include phone
+        phone: otherUser ? otherUser.phone : null // Include phone
       };
     });
 
@@ -95,7 +68,7 @@ exports.createGroupChat = expressAsyncHandler(async (req, res) => {
   let users = new Set([...req.body.users, req.user._id.toString()]);
   users = Array.from(users);
   const existChat = await Chat.findOne({
-    usersRef: users,
+    usersRef: users
   });
 
   if (existChat) {
@@ -112,7 +85,7 @@ exports.createGroupChat = expressAsyncHandler(async (req, res) => {
       chatName: req.body.name,
       usersRef: users,
       isGroup: true,
-      groupAdmin: req.user._id,
+      groupAdmin: req.user._id
     };
     const groupChat = await Chat.create(chat);
 
@@ -120,12 +93,12 @@ exports.createGroupChat = expressAsyncHandler(async (req, res) => {
       .populate({
         path: "usersRef",
         select: "email username avatar",
-        model: "User",
+        model: "User"
       })
       .populate({
         path: "groupAdmin",
         select: "email username avatar",
-        model: "User",
+        model: "User"
       });
 
     res.status(200).json(createdGroup);
@@ -139,10 +112,10 @@ exports.renameGroup = expressAsyncHandler(async (req, res) => {
   const updatedChat = await Chat.findByIdAndUpdate(
     chatId,
     {
-      chatName,
+      chatName
     },
     {
-      new: true, //to return the new name of the group
+      new: true //to return the new name of the group
     }
   )
     .populate("usersRef", "-password")
@@ -194,25 +167,6 @@ exports.removeFromGroup = expressAsyncHandler(async (req, res) => {
   } else {
     res.json(updatedGroupMembers);
   }
-});
-
-exports.searchChat = expressAsyncHandler(async (req, res) => {
-  const { searchTerm } = req.query;
-  const { chatId } = req.params;
-  const messages = await Message.find({
-    chatRef: chatId,
-  })
-    .find({ content: { $regex: searchTerm, $options: "i" } })
-    .populate({
-      path: "sender",
-      select: "username avatar",
-      model: "User",
-    })
-    .sort({ createdAt: -1 });
-  if (!messages) {
-    throw new ApiError("No messages found", 404);
-  }
-  res.json(messages);
 });
 
 // exports.searchUsersForPrivateChat = expressAsyncHandler(async (req, res) => {

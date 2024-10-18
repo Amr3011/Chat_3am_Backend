@@ -7,19 +7,14 @@ const {
   createGroupChat,
   renameGroup,
   removeFromGroup,
-  addToGroup,
-  searchChat,
+  addToGroup
 } = require("../controllers/chatController");
 const { createChatValidator } = require("../validators/chatValidator");
-
-// router.route("/search-users").get(authMiddleware, searchUsersForPrivateChat);
 
 router
   .route("/")
   .post(authMiddleware, createPrivateChat)
   .get(authMiddleware, fetchChats);
-
-router.g;
 
 router
   .route("/group")
@@ -28,8 +23,5 @@ router
 
 router.route("/group-add").put(authMiddleware, addToGroup);
 router.route("/group-remove").put(authMiddleware, removeFromGroup);
-
-// search chat
-router.route("/:chatId").get(authMiddleware, searchChat);
 
 module.exports = router;
