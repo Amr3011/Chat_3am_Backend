@@ -52,6 +52,7 @@ exports.createGroupChat = expressAsyncHandler(async (req, res) => {
     chatName,
     isGroup: true,
     usersRef: users,
+    picture : req.body.picture,
     groupAdmin: req.user._id
   });
   chat = await chat.save();
