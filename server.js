@@ -42,6 +42,21 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("new notification", (newNotificationReceived) => {
+    let chat = newNotificationReceived.chatRef;
+
+    if (!chat.usersRef)
+      return process.env.NODE_ENV === "development"
+        ? console.log("chat.usersRef not defined")
+        : null;
+
+    chat.usersRef.forEach((user) => {
+      if (user._id === newNotificationReceived.sender._id) return;
+
+      socket.in(user._id).emit("notification received", newNotificationReceived);
+    });
+  });
+
   socket.off("setup", () => {
     process.env.NODE_ENV === "development" && console.log("User Disconnected");
     socket.leave(userId);
