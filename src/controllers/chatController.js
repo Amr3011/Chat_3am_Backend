@@ -35,7 +35,9 @@ exports.fetchPrivateChats = expressAsyncHandler(async (req, res) => {
   const chats = await Chat.find({
     isGroup: false,
     usersRef: { $elemMatch: { $eq: req.user._id } }
-  }).populate("usersRef", "username name avatar _id");
+  })
+    .populate("usersRef", "username name avatar _id")
+    .populate("latestMessage");
   res.status(200).json(chats);
 });
 
@@ -43,7 +45,7 @@ exports.createGroupChat = expressAsyncHandler(async (req, res) => {
   let users = new Set([...req.body.users, req.user._id]);
   users = Array.from(users);
   const { chatName } = req.body;
-  if (!users || users.length < 2) {
+  if (!users || users.length >= 2) {
     return res.status(400).json({ message: "Group members are required" });
   }
   chat = new Chat({

@@ -76,11 +76,23 @@ exports.getMessages = expressAsyncHandler(async (req, res) => {
     .sort("-createdAt")
     .skip(skip)
     .limit(limit)
-    .select("_id sender content contentType isSeen isDelivered updatedAt")
+    .select(
+      "_id sender content contentType isSeen isDelivered updatedAt createdAt chatRef"
+    )
     .populate({
       path: "sender",
       select: "username avatar _id",
       model: "User"
+    })
+    .populate({
+      path: "chatRef",
+      select: "usersRef",
+      model: "Chat",
+      populate: {
+        path: "usersRef",
+        select: "username avatar _id",
+        model: "User"
+      }
     });
 
   res.status(200).json({
