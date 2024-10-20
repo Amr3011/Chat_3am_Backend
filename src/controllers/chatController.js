@@ -35,7 +35,9 @@ exports.fetchPrivateChats = expressAsyncHandler(async (req, res) => {
   const chats = await Chat.find({
     isGroup: false,
     usersRef: { $elemMatch: { $eq: req.user._id } }
-  }).populate("usersRef", "username name avatar _id");
+  })
+    .populate("usersRef", "username name avatar _id")
+    .populate("latestMessage");
   res.status(200).json(chats);
 });
 

@@ -11,7 +11,7 @@ const io = new ioServer(server, {
 
 io.on("connection", (socket) => {
   process.env.NODE_ENV === "development" &&
-    console.log("Connected to socket.io");
+    console.log("Connected to socket.io", socket.id);
   socket.on("setup", (userId) => {
     socket.join(userId);
     socket.emit("connected");
