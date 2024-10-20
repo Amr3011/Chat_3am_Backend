@@ -37,7 +37,8 @@ exports.fetchPrivateChats = expressAsyncHandler(async (req, res) => {
     usersRef: { $elemMatch: { $eq: req.user._id } }
   })
     .populate("usersRef", "username name avatar _id")
-    .populate("latestMessage");
+    .populate("latestMessage")
+    .sort({ updatedAt: -1 });
   res.status(200).json(chats);
 });
 
@@ -52,7 +53,7 @@ exports.createGroupChat = expressAsyncHandler(async (req, res) => {
     chatName,
     isGroup: true,
     usersRef: users,
-    picture : req.body.picture,
+    picture: req.body.picture,
     groupAdmin: req.user._id
   });
   chat = await chat.save();
