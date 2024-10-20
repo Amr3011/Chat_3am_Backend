@@ -13,6 +13,7 @@ dotenv.config();
 const userRoutes = require("./src/routes/userRoutes");
 const chatRoutes = require("./src/routes/chatRoutes.js");
 const messageRoutes = require("./src/routes/messageRoutes.js");
+const notificationRoutes = require("./src/routes/notificationRoute.js");
 
 // Connect to database
 connectDB();
@@ -35,6 +36,7 @@ if (process.env.NODE_ENV === "development") {
 app.use("/api/user", userRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/message", messageRoutes);
+app.use('/api/notifications', notificationRoutes); 
 
 // Handle errors
 app.all("*", (req, res, next) => {
