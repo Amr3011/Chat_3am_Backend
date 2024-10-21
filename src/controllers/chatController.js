@@ -32,14 +32,42 @@ exports.createPrivateChat = expressAsyncHandler(async (req, res) => {
 });
 
 exports.fetchPrivateChats = expressAsyncHandler(async (req, res) => {
-  const chats = await Chat.find({
+  const { searchTerm } = req.query;
+
+  let searchCriteria = {
     isGroup: false,
-    usersRef: { $elemMatch: { $eq: req.user._id } }
-  })
+    usersRef: { $elemMatch: { $eq: req.user._id } },
+  };
+
+  if (searchTerm) {
+    const matchingUsers = await User.find({
+      username: { $regex: searchTerm, $options: "i" },
+    }).select("_id");
+
+    if (matchingUsers.length > 0) {
+      searchCriteria = {
+        ...searchCriteria,
+        usersRef: {
+          $in: matchingUsers
+            .map((user) => user._id)
+            .filter((userId) => userId.toString() !== req.user._id.toString()),
+        },
+      };
+    }
+  }
+
+  const chats = await Chat.find(searchCriteria)
     .populate("usersRef", "username name avatar _id")
     .populate("latestMessage");
-  res.status(200).json(chats);
+
+  const filteredChats = chats.filter(chat => {
+    return chat.usersRef.some(user => user._id.toString() !== req.user._id.toString());
+  });
+
+  res.status(200).json(filteredChats);
 });
+
+
 
 exports.createGroupChat = expressAsyncHandler(async (req, res) => {
   let users = new Set([...req.body.users, req.user._id]);
@@ -59,17 +87,30 @@ exports.createGroupChat = expressAsyncHandler(async (req, res) => {
 });
 
 exports.fetchGroupChats = expressAsyncHandler(async (req, res) => {
-  const chats = await Chat.find({
+  const { searchTerm } = req.query;
+
+  let searchCriteria = {
     isGroup: true,
     $or: [
       { usersRef: { $elemMatch: { $eq: req.user._id } } },
-      { groupAdmin: req.user._id }
-    ]
-  })
+      { groupAdmin: req.user._id },
+    ],
+  };
+
+  if (searchTerm) {
+    searchCriteria = {
+      ...searchCriteria,
+      chatName: { $regex: searchTerm, $options: "i" },
+    };
+  }
+
+  const chats = await Chat.find(searchCriteria)
     .populate("usersRef", "username name avatar _id")
     .populate("groupAdmin", "username name avatar _id");
+
   res.status(200).json(chats);
 });
+
 
 exports.renameGroup = expressAsyncHandler(async (req, res) => {
   const { chatId, chatName } = req.body;
