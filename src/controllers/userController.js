@@ -10,10 +10,13 @@ const ApiError = require("../utils/ApiError");
 exports.allUsers = expressAsyncHandler(async (req, res) => {
   //req.query.search this like useParams
 
-  let filter = {};
+  let filter = {
+    _id: { $ne: req.user._id }
+  };
   const { search } = req.query;
   if (search) {
     filter = {
+      ...filter,
       $or: [
         //option "i" to make it case insensitive
         { username: { $regex: search, $options: "i" } },
