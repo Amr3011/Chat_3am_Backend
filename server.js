@@ -72,18 +72,16 @@ io.on("connection", (socket) => {
     });
   });
 
-  // socket.on("newNotification", (notification) => {
+  // socket.on("newNotification", async (notification) => {
   //   process.env.NODE_ENV === "development" &&
-  //     console.log(`⚡: ${socket.id} sent notification: ${notification}`);
-  //   socket.to(notification.receiver).emit("notificationReceived", notification);
-  // });
-
-  // socket.on("notificationReceived", (notification) => {
-  //   process.env.NODE_ENV === "development" &&
-  //     console.log(`⚡: ${socket.id} received notification: ${notification}`);
+  //     console.log(
+  //       `⚡: ${socket.id} sent notification: ${JSON.stringify(notification)}`
+  //     );
+  //   socket.join(notification.receiver._id);
   //   socket.broadcast
-  //     .to(notification.sender)
+  //     .to(notification.receiver._id)
   //     .emit("notificationReceived", notification);
+  //   socket.leave(notification.receiver._id);
   // });
 
   socket.on("leaveChat", (chatId) => {
