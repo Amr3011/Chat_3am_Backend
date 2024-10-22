@@ -45,12 +45,5 @@ app.all("*", (req, res, next) => {
 
 app.use(globalError);
 
-const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
-  console.log(
-    `Server running in ${process.env.NODE_ENV} mode on http://127.0.0.1:${PORT}`
-  );
-});
-
-module.exports = server;
+module.exports = app;

@@ -1,9 +1,18 @@
-const { Server: ioServer } = require("socket.io");
-const server = require("./app");
+const { Server } = require("socket.io");
+const http = require("http");
+const PORT = process.env.PORT || 5000;
+const app = require("./app");
+
+const server = http.createServer(app);
+
+server.listen(PORT, () => {
+  console.log(
+    `Server running in ${process.env.NODE_ENV} mode on http://127.0.0.1:${PORT}`
+  );
+});
 
 //Setup Socket.io
-const io = new ioServer(server, {
-  pingTimeout: 60000,
+const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL
   }
@@ -12,54 +21,74 @@ const io = new ioServer(server, {
 io.on("connection", (socket) => {
   process.env.NODE_ENV === "development" &&
     console.log(`⚡: ${socket.id} user just connected`);
-  socket.on("setup", (userId) => {
+
+  socket.on("subscribe", (userId) => {
+    process.env.NODE_ENV === "development" &&
+      console.log(`⚡: ${socket.id} subscribe to room ${userId}`);
     socket.join(userId);
     socket.emit("connected");
   });
 
-  socket.on("join chat", (room) => {
+  socket.on("joinChat", (room) => {
     process.env.NODE_ENV === "development" &&
-      console.log(`user ${socket.id} joining room ${room}`);
+      console.log(`⚡: ${socket.id} joined room ${room}`);
     socket.join(room);
   });
 
-  socket.on("typing", (room) => socket.in(room).emit("typing"));
-
-  socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
-
-  socket.on("new message", (newMessageReceived) => {
-    let chat = newMessageReceived.chatRef;
-
-    if (!chat.usersRef)
-      return process.env.NODE_ENV === "development"
-        ? console.log("chat.usersRef not defined")
-        : null;
-
-    chat.usersRef.forEach((user) => {
-      if (user._id === newMessageReceived.sender._id) return;
-
-      socket.in(user._id).emit("message received", newMessageReceived);
-    });
+  socket.on("typing", (room, username) => {
+    process.env.NODE_ENV === "development" &&
+      console.log(`⚡: ${username} is typing in room ${room}`);
+    socket.broadcast.to(room).emit("typing", username);
   });
 
-  socket.on("new notification", (newNotificationReceived) => {
-    let chat = newNotificationReceived.chatRef;
-
-    if (!chat.usersRef)
-      return process.env.NODE_ENV === "development"
-        ? console.log("chat.usersRef not defined")
-        : null;
-
-    chat.usersRef.forEach((user) => {
-      if (user._id === newNotificationReceived.sender._id) return;
-
-      socket.in(user._id).emit("notification received", newNotificationReceived);
-    });
+  socket.on("stopTyping", (room) => {
+    process.env.NODE_ENV === "development" &&
+      console.log(`⚡: ${socket.id} stopped typing in room ${room}`);
+    socket.broadcast.to(room).emit("stopTyping");
   });
 
-  socket.off("setup", () => {
-    process.env.NODE_ENV === "development" && console.log("User Disconnected");
+  socket.on("newMessage", (message) => {
+    process.env.NODE_ENV === "development" &&
+      console.log(`⚡: ${socket.id} sent message: ${message}`);
+    socket.broadcast.to(message.chatRef._id).emit("messageReceived", message);
+  });
+
+  socket.on("messageReceived", (message) => {
+    process.env.NODE_ENV === "development" &&
+      console.log(`⚡: ${socket.id} received message: ${message}`);
+    socket.broadcast.to(message.chatRef._id)("messageReceived", message);
+  });
+
+  socket.on("newNotification", (notification) => {
+    process.env.NODE_ENV === "development" &&
+      console.log(`⚡: ${socket.id} sent notification: ${notification}`);
+    socket.to(notification.receiver).emit("notificationReceived", notification);
+  });
+
+  socket.on("notificationReceived", (notification) => {
+    process.env.NODE_ENV === "development" &&
+      console.log(`⚡: ${socket.id} received notification: ${notification}`);
+    socket.broadcast
+      .to(notification.sender)
+      .emit("notificationReceived", notification);
+  });
+
+  socket.on("leaveChat", (chatId) => {
+    socket.leave(chatId);
+    process.env.NODE_ENV === "development" &&
+      console.log(`⚡: ${socket.id} left chat ${chatId}`);
+  });
+
+  socket.on("unsubscribe", (userId) => {
     socket.leave(userId);
+    process.env.NODE_ENV === "development" &&
+      console.log(`⚡: ${socket.id} left room ${userId}`);
+  });
+
+  socket.on("disconnect", () => {
+    socket.leaveAll();
+    process.env.NODE_ENV === "development" &&
+      console.log(`⚡: ${socket.id} user just disconnected`);
   });
 });
 
