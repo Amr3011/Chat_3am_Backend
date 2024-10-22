@@ -73,7 +73,7 @@ exports.getMessages = expressAsyncHandler(async (req, res) => {
   const documents = await Message.countDocuments(filterObject);
 
   const messages = await Message.find(filterObject)
-    .sort("-createdAt")
+    .sort("createdAt")
     .skip(skip)
     .limit(limit)
     .select(
