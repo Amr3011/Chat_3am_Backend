@@ -28,6 +28,7 @@ exports.createPrivateChat = expressAsyncHandler(async (req, res) => {
     });
     chat = await chat.save();
   }
+  chat = await chat.populate("usersRef", "username _id");
   res.status(200).json(chat);
 });
 

@@ -5,29 +5,28 @@ const messageSchema = new mongoose.Schema(
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "Please provide a sender"],
+      required: [true, "Please provide a sender"]
     },
     content: {
       type: String,
-      required: [true, "Please provide a content"],
+      required: [true, "Please provide a content"]
     },
     contentType: {
       type: String,
-      default: "text",
+      default: "text"
     },
-    chatRef: 
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Chat",
-      },
+    chatRef: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Chat"
+    },
     isSeen: {
       type: Boolean,
-      default: false,
+      default: false
     },
     isDelivered: {
       type: Boolean,
-      default: false,
-    },
+      default: false
+    }
   },
   { timestamps: true }
 );

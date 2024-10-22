@@ -59,19 +59,30 @@ io.on("connection", (socket) => {
     socket.broadcast.to(message.chatRef._id)("messageReceived", message);
   });
 
-  socket.on("newNotification", (notification) => {
+  socket.on("newChat", (chat, creatorId) => {
     process.env.NODE_ENV === "development" &&
-      console.log(`⚡: ${socket.id} sent notification: ${notification}`);
-    socket.to(notification.receiver).emit("notificationReceived", notification);
+      console.log(`⚡: ${socket.id} create chat: ${chat}`);
+    chat.usersRef.forEach((user) => {
+      if (user._id === creatorId) {
+        return;
+      }
+      socket.join(user._id);
+      socket.broadcast.to(user._id).emit("chatCreated", chat);
+      socket.leave(user._id);
+    });
   });
 
-  socket.on("notificationReceived", (notification) => {
-    process.env.NODE_ENV === "development" &&
-      console.log(`⚡: ${socket.id} received notification: ${notification}`);
-    socket.broadcast
-      .to(notification.sender)
-      .emit("notificationReceived", notification);
-  });
+  // socket.on("newNotification", async (notification) => {
+  //   process.env.NODE_ENV === "development" &&
+  //     console.log(
+  //       `⚡: ${socket.id} sent notification: ${JSON.stringify(notification)}`
+  //     );
+  //   socket.join(notification.receiver._id);
+  //   socket.broadcast
+  //     .to(notification.receiver._id)
+  //     .emit("notificationReceived", notification);
+  //   socket.leave(notification.receiver._id);
+  // });
 
   socket.on("leaveChat", (chatId) => {
     socket.leave(chatId);
