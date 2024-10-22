@@ -63,10 +63,7 @@ exports.createGroupChat = expressAsyncHandler(async (req, res) => {
 exports.fetchGroupChats = expressAsyncHandler(async (req, res) => {
   const chats = await Chat.find({
     isGroup: true,
-    $or: [
-      { usersRef: { $elemMatch: { $eq: req.user._id } } },
-      { groupAdmin: req.user._id }
-    ]
+    usersRef: { $in: req.user._id }
   })
     .populate("usersRef", "username name avatar _id")
     .populate("groupAdmin", "username name avatar _id");
