@@ -32,14 +32,42 @@ exports.createPrivateChat = expressAsyncHandler(async (req, res) => {
 });
 
 exports.fetchPrivateChats = expressAsyncHandler(async (req, res) => {
-  const chats = await Chat.find({
+  const { searchTerm } = req.query;
+
+  let searchCriteria = {
     isGroup: false,
     usersRef: { $elemMatch: { $eq: req.user._id } }
-  })
+  };
+
+  if (searchTerm) {
+    const matchingUsers = await User.find({
+      username: { $regex: searchTerm, $options: "i" }
+    }).select("_id");
+
+    if (matchingUsers.length > 0) {
+      searchCriteria = {
+        ...searchCriteria,
+        usersRef: {
+          $in: matchingUsers
+            .map((user) => user._id)
+            .filter((userId) => userId.toString() !== req.user._id.toString())
+        }
+      };
+    }
+  }
+
+  const chats = await Chat.find(searchCriteria)
     .populate("usersRef", "username name avatar _id")
     .populate("latestMessage")
     .sort({ updatedAt: -1 });
-  res.status(200).json(chats);
+
+  const filteredChats = chats.filter((chat) => {
+    return chat.usersRef.some(
+      (user) => user._id.toString() !== req.user._id.toString()
+    );
+  });
+
+  res.status(200).json(filteredChats);
 });
 
 exports.createGroupChat = expressAsyncHandler(async (req, res) => {
@@ -61,12 +89,25 @@ exports.createGroupChat = expressAsyncHandler(async (req, res) => {
 });
 
 exports.fetchGroupChats = expressAsyncHandler(async (req, res) => {
-  const chats = await Chat.find({
+  const { searchTerm } = req.query;
+
+  let searchCriteria = {
     isGroup: true,
-    usersRef: { $in: req.user._id }
-  })
+    usersRef: { $elemMatch: { $eq: req.user._id } }
+  };
+
+  if (searchTerm) {
+    searchCriteria = {
+      ...searchCriteria,
+      chatName: { $regex: searchTerm, $options: "i" }
+    };
+  }
+
+  const chats = await Chat.find(searchCriteria)
     .populate("usersRef", "username name avatar _id")
-    .populate("groupAdmin", "username name avatar _id");
+    .populate("groupAdmin", "username name avatar _id")
+    .populate("latestMessage");
+
   res.status(200).json(chats);
 });
 
@@ -132,29 +173,3 @@ exports.removeFromGroup = expressAsyncHandler(async (req, res) => {
   }
 });
 
-// exports.searchUsersForPrivateChat = expressAsyncHandler(async (req, res) => {
-//   const loggedInUserId = req.user._id;
-
-//   // Fetch all chats that the user is already part of
-//   const existingChats = await Chat.find({
-//     isGroup: false,
-//     usersRef: { $elemMatch: { $eq: loggedInUserId } },
-//   });
-
-//   // Extract user IDs from existing chats
-//   const existingUserIds = existingChats.reduce((ids, chat) => {
-//     chat.usersRef.forEach((user) => {
-//       if (user.toString() !== loggedInUserId.toString()) {
-//         ids.push(user.toString());
-//       }
-//     });
-//     return ids;
-//   }, []);
-
-//   // Find users not in the existing chats
-//   const usersNotInChat = await User.find({
-//     _id: { $nin: [...existingUserIds, loggedInUserId] },
-//   }).select("username email phone avatar");
-
-//   res.json(usersNotInChat);
-// });
