@@ -18,6 +18,7 @@ const {
 } = require("../validators/forgotPasswordValidator");
 const { loginValidator } = require("../validators/loginValidator");
 const { RegisterValidator } = require("../validators/RegisterValidator");
+const { updatePasswordValidator } = require("../validators/updatePasswordValidator");
 
 router.post("/register", RegisterValidator, register);
 router.post("/login", loginValidator, login);
@@ -26,7 +27,7 @@ router.post("/verify", verifyEmail);
 router.post("/reset-password/:resetToken", resetPassword);
 router.get("/logout", authMiddleware, logout);
 
-router.put("/change-password", authMiddleware, updatePassword);
+router.put("/change-password", authMiddleware,updatePasswordValidator ,updatePassword);
 
 
 router
