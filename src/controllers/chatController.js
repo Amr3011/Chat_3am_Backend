@@ -172,4 +172,3 @@ exports.removeFromGroup = expressAsyncHandler(async (req, res) => {
     res.json(updatedGroupMembers);
   }
 });
-
