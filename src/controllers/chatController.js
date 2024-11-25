@@ -35,41 +35,37 @@ exports.createPrivateChat = expressAsyncHandler(async (req, res) => {
 exports.fetchPrivateChats = expressAsyncHandler(async (req, res) => {
   const { searchTerm } = req.query;
 
+  // Base search criteria for private (non-group) chats involving the current user
   let searchCriteria = {
     isGroup: false,
     usersRef: { $elemMatch: { $eq: req.user._id } }
   };
 
-  if (searchTerm) {
-    const matchingUsers = await User.find({
-      username: { $regex: searchTerm, $options: "i" }
-    }).select("_id");
-
-    if (matchingUsers.length > 0) {
-      searchCriteria = {
-        ...searchCriteria,
-        usersRef: {
-          $in: matchingUsers
-            .map((user) => user._id)
-            .filter((userId) => userId.toString() !== req.user._id.toString())
-        }
-      };
-    }
-  }
-
-  const chats = await Chat.find(searchCriteria)
+  // Fetch all private chats involving the current user
+  let chats = await Chat.find(searchCriteria)
     .populate("usersRef", "username name avatar _id")
     .populate("latestMessage")
     .sort({ updatedAt: -1 });
 
-  const filteredChats = chats.filter((chat) => {
-    return chat.usersRef.some(
-      (user) => user._id.toString() !== req.user._id.toString()
-    );
-  });
+  // Filter out chats where the only user in usersRef is the requesting user
+  chats = chats.filter(chat =>
+    chat.usersRef.some(user => user._id.toString() !== req.user._id.toString())
+  );
 
-  res.status(200).json(filteredChats);
+  // If a search term is provided, further filter chats to include only those where
+  // the other user's username matches the search term
+  if (searchTerm) {
+    chats = chats.filter(chat => {
+      // Find the user in the chat who is not the requesting user
+      const otherUser = chat.usersRef.find(user => user._id.toString() !== req.user._id.toString());
+      // Return true if the other user's username matches the search term
+      return otherUser && otherUser.username.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+  }
+
+  res.status(200).json(chats);
 });
+
 
 exports.createGroupChat = expressAsyncHandler(async (req, res) => {
   let users = new Set([...req.body.users, req.user._id]);
