@@ -16,20 +16,35 @@ exports.getUserNotifications = expressAsyncHandler(async (req, res) => {
 
 exports.createNotification = expressAsyncHandler(async (req, res) => {
   const { sender, receiver, message, chatRef } = req.body;
+
   let notification = new Notification({
     sender,
     receiver,
     message,
-    chatRef
+    chatRef,
   });
+
+  // Save the notification
   notification = await notification.save();
-  notification = await notification
-    .populate("sender", "username avatar _id")
-    .populate("receiver", "username avatar _id")
-    .populate("message", "content contentType");
+
+  // Populate fields
+  await notification.populate("sender", "username avatar _id");
+  await notification.populate("receiver", "username avatar _id");
+  await notification.populate("message", "content contentType");
 
   res.status(201).json({
     success: true,
-    notification
+    notification,
+  });
+});
+
+// Delete all notifications for a user
+exports.deleteAllUserNotifications = expressAsyncHandler(async (req, res) => {
+  const result = await Notification.deleteMany({ receiver: req.user._id });
+
+  res.status(200).json({
+    success: true,
+    message: "All notifications deleted successfully.",
+    deletedCount: result.deletedCount,
   });
 });
