@@ -1,16 +1,28 @@
 {
-    "version": 2,
-    "builds": [
-      {
-        "src": "server.js",
-        "use": "@vercel/node"
-      }
-    ],
-    "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "server.js"
-      }
-    ]
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/server.js"
+    }
+  ],
+  "env": {
+    "MONGO_URI": "@env:MONGO_URI",
+    "PORT": "@env:PORT",
+    "NODE_ENV": "@env:NODE_ENV",
+    "SALT": "@env:SALT",
+    "JWT_SECRET": "@env:JWT_SECRET",
+    "JWT_EXPIRE": "@env:JWT_EXPIRE",
+    "COOKIE_EXPIRE": "@env:COOKIE_EXPIRE",
+    "EMAIL_USER": "@env:EMAIL_USER",
+    "EMAIL_PASS": "@env:EMAIL_PASS",
+    "RESET_TOKEN_EXPIRE": "@env:RESET_TOKEN_EXPIRE",
+    "CLIENT_URL": "@env:CLIENT_URL"
   }
-  
+}
